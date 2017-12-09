@@ -158,6 +158,18 @@ implementation {
     return SUCCESS;
   }
 
+  command error_t iSMAC.keepAlive(uint8_t status) {
+
+  }
+
+  command void iSMAC.setSynchronizer(uint8_t status) {
+
+  }
+
+  command void iSMAC.setFollower(uint8_t status) {
+
+  }
+
 
   event void activeTimer.fired() {       
       dbg("TossimPacketModelC", "TossimPacketModelC: Active timer fired at time = %llu.\n",sim_time());
