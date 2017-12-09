@@ -47,6 +47,10 @@
 module SimSchedulerBasicP {
   provides interface Scheduler;
   provides interface TaskBasic[uint8_t id];
+  #if defined(POWERTOSSIMZ)
+    uses interface McuSleep;
+    uses interface Atm128EnergyHandler as Energy;
+  #endif
 }
 implementation
 {
@@ -185,11 +189,17 @@ implementation
       nextTask = popTask();
       if( nextTask == NO_TASK )
       {
-	dbg("Scheduler", "Told to run next task, but no task to run.\n");
-	return FALSE;
+		dbg("Scheduler", "Told to run next task, but no task to run.\n");
+		#if defined(POWERTOSSIMZ)
+		  call McuSleep.sleep();
+		#endif
+		return FALSE;
       }
     }
     dbg("Scheduler", "Running task %hhu.\n", nextTask);
+	#if defined(POWERTOSSIMZ)
+	  call Energy.mcu_state_change(6);
+	#endif
     signal TaskBasic.runTask[nextTask]();
     return TRUE;
   }
