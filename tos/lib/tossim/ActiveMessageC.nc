@@ -1,33 +1,25 @@
-// $Id: ActiveMessageC.nc,v 1.1 2014/11/26 19:31:45 carbajor Exp $
+// $Id$
 /*
- * Copyright (c) 2005 Stanford University. All rights reserved.
+ * "Copyright (c) 2005 Stanford University. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * - Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the
- *   distribution.
- * - Neither the name of the copyright holder nor the names of
- *   its contributors may be used to endorse or promote products derived
- *   from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose, without fee, and without written
+ * agreement is hereby granted, provided that the above copyright
+ * notice, the following two paragraphs and the author appear in all
+ * copies of this software.
+ * 
+ * IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
+ * IF STANFORD UNIVERSITY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
+ * 
+ * STANFORD UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ * PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND STANFORD UNIVERSITY
+ * HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ * ENHANCEMENTS, OR MODIFICATIONS."
  */
 
 /**
@@ -37,6 +29,8 @@
  *
  * @author Philip Levis
  * @date December 2 2005
+ * @author Himanshu Singh (contributor)
+ *         -- configuration for switching MAC layer 
  */
 
 configuration ActiveMessageC {
@@ -54,13 +48,76 @@ configuration ActiveMessageC {
 }
 implementation {
   components TossimActiveMessageC as AM;
-  components TossimPacketModelC as Network;
+  
+  #if defined(SMAC)
+      components MAC_SMAC as Network; 
+
+      components new TimerMilliC() as gotrts_sleepTimer;
+      components new TimerMilliC() as RTSwaitTimer;
+      components new TimerMilliC() as CTSwaitTimer;
+      components new TimerMilliC() as SYNwaitTimer;
+      components new TimerMilliC() as activeTimer;
+      components new TimerMilliC() as sleepTimer;
+      components new AMSenderC(6);
+
+  #elif defined(DMAC)
+      components MAC_DMAC as Network; 
+
+      components new TimerMilliC() as du_Timer;
+      components new TimerMilliC() as SYNwaitTimer;
+      components new TimerMilliC() as cycleTimer;
+      components new TimerMilliC() as TX_Timer;
+      components new TimerMilliC() as RX_Timer;
+      components new AMSenderC(6);
+
+  #elif defined(CSMACA)
+      components MAC_CSMACA as Network; 
+
+      components new TimerMilliC() as SleepTimer;
+      components new TimerMilliC() as RTSwaitTimer;
+      components new TimerMilliC() as CTSwaitTimer;
+      components new TimerMilliC() as SYNwaitTimer;
+      components new TimerMilliC() as RadioTimer;
+      components new AMSenderC(6);
+
+  #elif defined(BMACPLUS)
+      components MAC_BMACP as Network;
+      components new TimerMilliC() as activeTimer;
+      components new TimerMilliC() as sleepTimer;
+      components new AMSenderC(6);
+  #elif defined(BMAC)    
+      components MAC_BMACwithack as Network;
+      components new TimerMilliC() as activeTimer;
+      components new TimerMilliC() as sleepTimer;
+      components new AMSenderC(6);
+  #elif defined(XMAC)    
+      components MAC_XMAC2 as Network;
+      components new TimerMilliC() as activeTimer;
+      components new TimerMilliC() as sleepTimer;
+//    components new TimerMilliC() as P_ackWaitTimer;
+      components new AMSenderC(6);
+  #elif defined(TMAC)
+      components MAC_TMAC2 as Network;
+      
+      components new TimerMilliC() as gotrts_sleepTimer;
+      components new TimerMilliC() as RTSwaitTimer;
+      components new TimerMilliC() as CTSwaitTimer;
+      components new TimerMilliC() as SYNwaitTimer;
+      components new TimerMilliC() as cycleTimer;
+      components new TimerMilliC() as TA_Timer;
+      components new AMSenderC(6);
+      
+  #elif defined(CSMA)    
+      components MAC_CSMA as Network;
+  #else
+      components TossimPacketModelC as Network;
+  #endif
 
   components CpmModelC as Model;
 
   components ActiveMessageAddressC as Address;
   components MainC;
-  
+
   MainC.SoftwareInit -> Network;
   SplitControl = Network;
   
@@ -75,7 +132,61 @@ implementation {
   AM.amAddress -> Address;
   
   Network.GainRadioModel -> Model;
-  
+
+  #if defined(CSMACA)
+      Network.RTSwaitTimer -> RTSwaitTimer;
+      Network.CTSwaitTimer -> CTSwaitTimer;
+      Network.SYNwaitTimer -> SYNwaitTimer;
+      Network.RadioTimer -> RadioTimer;
+      Network.SleepTimer -> SleepTimer;
+      Network.MacAMSend -> AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #elif defined(SMAC)
+      Network.gotrts_sleepTimer -> gotrts_sleepTimer;
+      Network.RTSwaitTimer -> RTSwaitTimer;
+      Network.CTSwaitTimer -> CTSwaitTimer;
+      Network.SYNwaitTimer -> SYNwaitTimer;
+      Network.activeTimer -> activeTimer;
+      Network.sleepTimer -> sleepTimer;
+      Network.MacAMSend ->AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #elif defined(BMAC)
+      Network.activeTimer -> activeTimer;
+      Network.sleepTimer -> sleepTimer;
+      Network.MacAMSend ->AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #elif defined(XMAC)
+      Network.activeTimer -> activeTimer;
+      Network.sleepTimer -> sleepTimer;
+//    Network.P_ackWaitTimer -> P_ackWaitTimer;
+      Network.MacAMSend ->AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #elif defined(BMACPLUS)
+      Network.activeTimer -> activeTimer;
+      Network.sleepTimer -> sleepTimer;
+      Network.MacAMSend ->AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #elif defined(TMAC)
+      Network.gotrts_sleepTimer -> gotrts_sleepTimer;
+      Network.RTSwaitTimer -> RTSwaitTimer;
+      Network.CTSwaitTimer -> CTSwaitTimer;
+      Network.SYNwaitTimer -> SYNwaitTimer;
+      Network.cycleTimer -> cycleTimer;
+      Network.TA_Timer -> TA_Timer;
+      Network.MacAMSend ->AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #elif defined(DMAC)
+      Network.du_Timer -> du_Timer;
+      Network.SYNwaitTimer -> SYNwaitTimer;
+      Network.cycleTimer -> cycleTimer;
+      Network.TX_Timer -> TX_Timer;
+      Network.RX_Timer -> RX_Timer;
+      Network.MacAMSend ->AMSenderC;
+      Network.ConPacket -> AMSenderC;
+  #else  
+
+  #endif
+
   #if defined(POWERTOSSIMZ)
     components PacketEnergyEstimatorP;
     Network.Energy -> PacketEnergyEstimatorP;

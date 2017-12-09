@@ -1,32 +1,24 @@
 /*
- * Copyright (c) 2006 Stanford University. All rights reserved.
+ * "Copyright (c) 2006 Stanford University. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * - Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the
- *   distribution.
- * - Neither the name of the copyright holder nor the names of
- *   its contributors may be used to endorse or promote products derived
- *   from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose, without fee, and without written
+ * agreement is hereby granted, provided that the above copyright
+ * notice, the following two paragraphs and the author appear in all
+ * copies of this software.
+ * 
+ * IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
+ * IF STANFORD UNIVERSITY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
+ * 
+ * STANFORD UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ * PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND STANFORD UNIVERSITY
+ * HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ * ENHANCEMENTS, OR MODIFICATIONS."
  */
 
 /**
@@ -296,7 +288,7 @@ char sim_noise_gen(uint16_t node_id)__attribute__ ((C, spontaneous))
   double ranNum = RandomUniform();
   sim_noise_hash_t *noise_hash;
   noise_hash = (sim_noise_hash_t *)hashtable_search(pnoiseTable, pKey);
-
+      dbg("MY_DEBUG", "sim_noise_gen mein bhi ghus gaya hai.\n");
   if (noise_hash == NULL) {
     //Tal Debug
     dbg("Noise_c", "Did not pattern match");
@@ -308,7 +300,7 @@ char sim_noise_gen(uint16_t node_id)__attribute__ ((C, spontaneous))
     memcpy((void *)pKey, (void *)fKey, NOISE_HISTORY);
     noise_hash = (sim_noise_hash_t *)hashtable_search(pnoiseTable, pKey);
   }
-  
+//  dbg("MY_DEBUG", "sim_noise_gen mein bhi ghus gaya hai-2.\n");
   dbg_clear("HASH", "Key = ");
   for (i=0; i< NOISE_HISTORY ; i++) {
     dbg_clear("HASH", "%d,", pKey[i]);
@@ -321,7 +313,7 @@ char sim_noise_gen(uint16_t node_id)__attribute__ ((C, spontaneous))
   //Tal Debug
   numTotal++;
   //End Tal Debug
-
+//  dbg("MY_DEBUG", "sim_noise_gen mein here1.\n");
   if (noise_hash->numElements == 1) {
     noise = noise_hash->elements[0];
     dbg_clear("HASH", "(E)Noise = %d\n", noise);
@@ -330,6 +322,7 @@ char sim_noise_gen(uint16_t node_id)__attribute__ ((C, spontaneous))
     dbg("Noise_c", "In case 1: %i of %i\n", numCase1, numTotal);
     //End Tal Debug
     dbg("NoiseAudit", "Noise: %i\n", noise);
+      dbg("MY_DEBUG", "sim_noise_gen se nikal bhi gaya from if1.\n");
     return noise;
   }
 
@@ -337,7 +330,7 @@ char sim_noise_gen(uint16_t node_id)__attribute__ ((C, spontaneous))
   numCase2++;
   dbg("Noise_c", "In case 2: %i of %i\n", numCase2, numTotal);
   //End Tal Debug
- 
+
   for (i = 0; i < NOISE_NUM_VALUES - 1; i++) {
     dbg("HASH", "IN:for i=%d\n", i);
     if (i == 0) {	
@@ -358,6 +351,7 @@ char sim_noise_gen(uint16_t node_id)__attribute__ ((C, spontaneous))
   
   noise = NOISE_MIN_QUANTIZE + i; //TODO search_noise_from_bin_num(i+1);
   dbg("NoiseAudit", "Noise: %i\n", noise);		
+  dbg("MY_DEBUG", "sim_noise_gen se nikal bhi gaya.\n");
   return noise;
 }
 
@@ -381,33 +375,46 @@ char sim_noise_generate(uint16_t node_id, uint32_t cur_t)__attribute__ ((C, spon
     noiseData[node_id].lastNoiseVal = noiseData[node_id].noiseTrace[cur_t];
     return noiseData[node_id].noiseTrace[cur_t];
   }
-
+      dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate mein bhi ghus gaya hai.\n");
   if (prev_t == 0)
     delta_t = cur_t - (NOISE_HISTORY-1);
   else
     delta_t = cur_t - prev_t;
   
   dbg_clear("HASH", "delta_t = %d\n", delta_t);
-  
-  if (delta_t == 0)
+      dbg("CpmModelC", "sim_noise_generate mein bhi ghus gaya hai.\n");
+  if (delta_t == 0){
     noise = noiseData[node_id].lastNoiseVal;
+          dbg("CpmModelC", "sim_noise_generate mein bhi ghus gaya hai.\n");
+    }
   else {
     noiseG = (char *)malloc(sizeof(char)*delta_t);
-    
+
+    if(noiseG == NULL)
+    { dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate Malloc failed.\n");
+        return -80;
+     }
+      dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate se going to sim_noise_generate hai.\n");
     for(i=0; i< delta_t; i++) {
       noiseG[i] = sim_noise_gen(node_id);
+      dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate mein here 3.\n");
       arrangeKey(node_id);
+     
       noiseData[node_id].key[NOISE_HISTORY-1] = search_bin_num(noiseG[i]);
+     
     }
     noise = noiseG[delta_t-1];
     noiseData[node_id].lastNoiseVal = noise;
-    
+          dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate .. going to free this memory.\n");
     free(noiseG);
+              dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate .. freed this memory.\n");
   }
+      dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate mein here2.\n");
   noiseData[node_id].noiseGenTime = cur_t;
   if (noise == 0) {
-    dbg("HashZeroDebug", "Generated noise of zero.\n");
+    dbg("HashZeroDebug", "MY_DEBUG : Generated noise of zero.\n");
   }
+        dbg("MY_DEBUG", "MY_DEBUG : sim_noise_generate mein here3 noise = %d.\n",noise);
 //  printf("%i\n", noise);
   return noise;
 }
