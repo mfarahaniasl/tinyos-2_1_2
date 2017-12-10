@@ -1159,7 +1159,11 @@ implementation {
       imborderNode = FALSE;
       return imborderNode;
     }
+<<<<<<< HEAD
   }
+=======
+ }
+>>>>>>> 8dfb3861b6f91f8abb748cdb9097c1e7c16c90f8
 
   //whenever MAC layer receives a packet, this event is called.
   event void GainRadioModel.receive(message_t* msg) {
