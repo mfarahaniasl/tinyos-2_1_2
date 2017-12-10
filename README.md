@@ -1,1 +1,2 @@
-# tinyos-2_1_2
+# tinyos-2_1_2 with some additional MACs protocol as SMAC, TMAC, ...
+# It's aslo contain Powertossim-Z
